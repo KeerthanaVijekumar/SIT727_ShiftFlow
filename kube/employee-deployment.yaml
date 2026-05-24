@@ -26,8 +26,7 @@ spec:
                 topologyKey: kubernetes.io/hostname
       containers:
         - name: employee
-          image: employee-service:latest
-          imagePullPolicy: Never
+          image: australia-southeast1-docker.pkg.dev/shiftflow-gcp/shiftflow-repo/employee-service:latest
           ports:
             - containerPort: 3000
           resources:

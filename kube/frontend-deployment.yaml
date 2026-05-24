@@ -26,16 +26,15 @@ spec:
                 topologyKey: kubernetes.io/hostname
       containers:
         - name: frontend
-          image: frontend-service:latest
-          imagePullPolicy: Never
+          image: australia-southeast1-docker.pkg.dev/shiftflow-gcp/shiftflow-repo/frontend-service:latest
           ports:
             - containerPort: 3003
           resources:
             requests:
-              cpu: "100m"
-              memory: "128Mi"
+              cpu: "50m"
+              memory: "64Mi"
             limits:
-              cpu: "250m"
+              cpu: "150m"
               memory: "256Mi"
           livenessProbe:
             httpGet:
