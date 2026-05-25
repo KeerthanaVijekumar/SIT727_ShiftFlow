@@ -1,0 +1,131 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #f0f2f5;
+  min-height: 100vh;
+}
+
+.navbar {
+  background: #0f3460;
+  color: white;
+  padding: 0 32px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nav-brand {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 14px;
+}
+
+.btn-logout {
+  background: rgba(255,255,255,0.15);
+  color: white;
+  border: 1px solid rgba(255,255,255,0.3);
+  padding: 6px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.btn-logout:hover { background: rgba(255,255,255,0.25); }
+
+.container {
+  max-width: 900px;
+  margin: 32px auto;
+  padding: 0 20px;
+}
+
+.tab-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.tab {
+  padding: 10px 24px;
+  border: none;
+  border-radius: 8px;
+  background: white;
+  color: #555;
+  font-size: 14px;
+  cursor: pointer;
+  font-weight: 500;
+  border: 2px solid transparent;
+}
+
+.tab.active {
+  background: #0f3460;
+  color: white;
+}
+
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+.tab-content h2 {
+  font-size: 22px;
+  color: #1a1a2e;
+  margin-bottom: 8px;
+}
+
+.desc {
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+table {
+  width: 100%;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  border-collapse: collapse;
+}
+
+thead {
+  background: #0f3460;
+  color: white;
+}
+
+th, td {
+  padding: 14px 18px;
+  text-align: left;
+  font-size: 14px;
+}
+
+tbody tr:nth-child(even) { background: #f8f9fa; }
+tbody tr:hover { background: #eef2ff; }
+
+.btn-pick {
+  background: #28a745;
+  color: white;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.btn-pick:hover { background: #218838; }
+
+.loading, .empty, .error {
+  text-align: center;
+  padding: 40px;
+  color: #888;
+  background: white;
+  border-radius: 12px;
+}
+
+.error { color: #cc0000; }

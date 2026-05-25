@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ShiftFlow — Admin</title>
+  <link rel="stylesheet" href="/admin/admin.css">
+  <script src="/config.js"></script>
+</head>
+<body>
+  <div class="admin-container">
+    <nav class="admin-nav">
+      <button onclick="showTab('welcome')">Dashboard</button>
+      <button onclick="showTab('create-shift')">Create Shift</button>
+      <button onclick="loadAndShowViewShifts()">View Shifts</button>
+      <button onclick="loadAndShowApproveTimesheets()">Approve Timesheets</button>
+      <button onclick="logout()">Logout</button>
+    </nav>
+
+    <div id="welcome" class="tab-section active">
+      <h1>Admin Dashboard</h1>
+      <p>Welcome, Admin. Use the navigation above to manage shifts and timesheets.</p>
+    </div>
+
+    <div id="create-shift" class="tab-section">
+      <h2>Create a New Shift</h2>
+      <form id="createShiftForm">
+        <label>Shift ID</label>
+        <input type="text" id="shiftId" placeholder="e.g. S001" required />
+        <label>Date</label>
+        <input type="date" id="date" required />
+        <label>Start Time</label>
+        <input type="time" id="startTime" required />
+        <label>End Time</label>
+        <input type="time" id="endTime" required />
+        <button type="submit">Create Shift</button>
+      </form>
+      <div id="message"></div>
+    </div>
+
+    <div id="view-shifts" class="tab-section">
+      <h2>View Created Shifts</h2>
+      <div id="shifts-table-container"></div>
+    </div>
+
+    <div id="approve-timesheets" class="tab-section">
+      <h2>Approve Picked Shifts</h2>
+      <div id="timesheets-container"></div>
+    </div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('token');
+    if (!token) window.location.href = '/login';
+
+    const ADMIN_API_URL = window.ENV?.ADMIN_API_URL || 'http://admin-service:3000';
+
+    function showTab(tabId) {
+      document.querySelectorAll('.tab-section').forEach(t => t.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+    }
+
+    function logout() {
+      localStorage.clear();
+      window.location.href = '/login';
+    }
+
+    // Create Shift
+    document.getElementById('createShiftForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const messageDiv = document.getElementById('message');
+      const shiftId = document.getElementById('shiftId').value.trim();
+      const date = document.getElementById('date').value;
+      const startTime = document.getElementById('startTime').value;
+      const endTime = document.getElementById('endTime').value;
+
+      try {
+        const res = await fetch(`${ADMIN_API_URL}/shifts`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({ shiftId, date, startTime, endTime })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          messageDiv.style.color = 'green';
+          messageDiv.textContent = 'Shift created successfully!';
+          document.getElementById('createShiftForm').reset();
+        } else {
+          messageDiv.style.color = 'red';
+          messageDiv.textContent = data.message || 'Failed to create shift.';
+        }
+      } catch {
+        messageDiv.style.color = 'red';
+        messageDiv.textContent = 'Network error.';
+      }
+    });
+
+    // View Shifts
+    async function loadAndShowViewShifts() {
+      showTab('view-shifts');
+      const container = document.getElementById('shifts-table-container');
+      container.innerHTML = '<p>Loading...</p>';
+      try {
+        const res = await fetch(`${ADMIN_API_URL}/shifts`);
+        const shifts = await res.json();
+        if (!shifts.length) { container.innerHTML = '<p>No shifts found.</p>'; return; }
+        container.innerHTML = `
+          <table>
+            <thead><tr><th>Shift ID</th><th>Date</th><th>Start</th><th>End</th><th>Actions</th></tr></thead>
+            <tbody>
+              ${shifts.map(s => `
+                <tr id="row-${s.shiftId}">
+                  <td>${s.shiftId}</td>
+                  <td>${s.date}</td>
+                  <td>${s.startTime}</td>
+                  <td>${s.endTime}</td>
+                  <td>
+                    <button class="btn-edit" onclick="enableEdit('${s.shiftId}')">Edit</button>
+                    <button class="btn-delete" onclick="deleteShift('${s.shiftId}')">Delete</button>
+                  </td>
+                </tr>`).join('')}
+            </tbody>
+          </table>`;
+      } catch { container.innerHTML = '<p>Error loading shifts.</p>'; }
+    }
+
+    async function deleteShift(shiftId) {
+      if (!confirm(`Delete shift ${shiftId}?`)) return;
+      try {
+        const res = await fetch(`${ADMIN_API_URL}/shifts/${shiftId}`, { method: 'DELETE' });
+        if (res.ok) { alert('Deleted!'); loadAndShowViewShifts(); }
+        else alert('Failed to delete.');
+      } catch { alert('Error deleting shift.'); }
+    }
+
+    function enableEdit(shiftId) {
+      const row = document.getElementById(`row-${shiftId}`);
+      const cells = row.querySelectorAll('td');
+      const date = cells[1].textContent;
+      const start = cells[2].textContent;
+      const end = cells[3].textContent;
+      cells[1].innerHTML = `<input type="date" value="${date}">`;
+      cells[2].innerHTML = `<input type="time" value="${start}">`;
+      cells[3].innerHTML = `<input type="time" value="${end}">`;
+      cells[4].innerHTML = `
+        <button class="btn-edit" onclick="saveEdit('${shiftId}')">Save</button>
+        <button class="btn-delete" onclick="loadAndShowViewShifts()">Cancel</button>`;
+    }
+
+    async function saveEdit(shiftId) {
+      const row = document.getElementById(`row-${shiftId}`);
+      const inputs = row.querySelectorAll('input');
+      try {
+        const res = await fetch(`${ADMIN_API_URL}/shifts/${shiftId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            date: inputs[0].value,
+            startTime: inputs[1].value,
+            endTime: inputs[2].value
+          })
+        });
+        if (res.ok) { alert('Updated!'); loadAndShowViewShifts(); }
+        else alert('Failed to update.');
+      } catch { alert('Error updating shift.'); }
+    }
+
+    // Approve Timesheets
+    async function loadAndShowApproveTimesheets() {
+      showTab('approve-timesheets');
+      const container = document.getElementById('timesheets-container');
+      container.innerHTML = '<p>Loading...</p>';
+      try {
+        const res = await fetch(`${ADMIN_API_URL}/picked-shifts`);
+        const data = await res.json();
+        if (!data.length) { container.innerHTML = '<p>No picked shifts yet.</p>'; return; }
+        container.innerHTML = `
+          <table>
+            <thead><tr><th>Employee ID</th><th>Shift ID</th><th>Date</th><th>Start</th><th>End</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody>
+              ${data.map(s => `
+                <tr>
+                  <td>${s.employee_id}</td>
+                  <td>${s.shift_id}</td>
+                  <td>${s.date || '-'}</td>
+                  <td>${s.startTime || '-'}</td>
+                  <td>${s.endTime || '-'}</td>
+                  <td>${s.approved ? '<span style="color:green">Approved</span>' : '<span style="color:orange">Pending</span>'}</td>
+                  <td>
+                    <button class="btn-approve" onclick="approveShift('${s.employee_id}','${s.shift_id}')">Approve</button>
+                    <button class="btn-decline">Decline</button>
+                  </td>
+                </tr>`).join('')}
+            </tbody>
+          </table>`;
+      } catch { container.innerHTML = '<p>Error loading timesheets.</p>'; }
+    }
+
+    async function approveShift(employee_id, shift_id) {
+      try {
+        const res = await fetch(`${ADMIN_API_URL}/approve`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ employee_id, shift_id })
+        });
+        if (res.ok) { alert('Approved!'); loadAndShowApproveTimesheets(); }
+        else alert('Failed to approve.');
+      } catch { alert('Error approving shift.'); }
+    }
+  </script>
+</body>
+</html>

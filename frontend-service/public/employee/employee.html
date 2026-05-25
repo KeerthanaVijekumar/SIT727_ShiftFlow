@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ShiftFlow — Employee</title>
+  <link rel="stylesheet" href="/employee/employee.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-brand">⟳ ShiftFlow</div>
+    <div class="nav-right">
+      <span id="nav-user"></span>
+      <button class="btn-logout" onclick="logout()">Logout</button>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="tab-bar">
+      <button class="tab active" onclick="showTab('available', this)">Available Shifts</button>
+      <button class="tab" onclick="showTab('roster', this)">My Roster</button>
+    </div>
+
+    <div id="available" class="tab-content active">
+      <h2>Available Shifts</h2>
+      <p class="desc">Browse and pick up available shifts below.</p>
+      <div id="available-list"></div>
+    </div>
+
+    <div id="roster" class="tab-content">
+      <h2>My Roster</h2>
+      <p class="desc">Shifts you have picked up.</p>
+      <div id="roster-list"></div>
+    </div>
+  </div>
+
+  <script src="/config.js"></script>
+  <script>
+    const token = localStorage.getItem('token');
+    const staffId = localStorage.getItem('staff_id');
+    if (!token) window.location.href = '/login';
+
+    document.getElementById('nav-user').textContent = `👤 ${staffId || 'Employee'}`;
+
+    const EMPLOYEE_API_URL = window.ENV?.EMPLOYEE_API_URL || 'http://employee-service:3000';
+    const ADMIN_API_URL = window.ENV?.ADMIN_API_URL || 'http://admin-service:3000';
+
+    function showTab(id, btn) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      btn.classList.add('active');
+      if (id === 'available') loadAvailable();
+      if (id === 'roster') loadRoster();
+    }
+
+    async function loadAvailable() {
+      const div = document.getElementById('available-list');
+      div.innerHTML = '<p class="loading">Loading shifts...</p>';
+      try {
+        const res = await fetch(`${ADMIN_API_URL}/shifts`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const shifts = await res.json();
+        if (!shifts.length) { div.innerHTML = '<p class="empty">No shifts available.</p>'; return; }
+        div.innerHTML = `
+          <table>
+            <thead><tr><th>Shift ID</th><th>Date</th><th>Start</th><th>End</th><th>Action</th></tr></thead>
+            <tbody>
+              ${shifts.map(s => `
+                <tr>
+                  <td>${s.shiftId}</td>
+                  <td>${s.date}</td>
+                  <td>${s.startTime}</td>
+                  <td>${s.endTime}</td>
+                  <td><button class="btn-pick" onclick="pickShift('${s._id}')">Pick Up</button></td>
+                </tr>`).join('')}
+            </tbody>
+          </table>`;
+      } catch { div.innerHTML = '<p class="error">Failed to load shifts.</p>'; }
+    }
+
+    async function pickShift(shift_id) {
+      try {
+        const res = await fetch(`${EMPLOYEE_API_URL}/allocate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ shift_id })
+        });
+        const data = await res.json();
+        alert(res.ok ? 'Shift picked up successfully!' : data.message || 'Failed to pick shift.');
+        if (res.ok) loadAvailable();
+      } catch { alert('Error picking shift.'); }
+    }
+
+    async function loadRoster() {
+      const div = document.getElementById('roster-list');
+      div.innerHTML = '<p class="loading">Loading roster...</p>';
+      try {
+        const res = await fetch(`${EMPLOYEE_API_URL}/roster`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const shifts = await res.json();
+        if (!shifts.length) { div.innerHTML = '<p class="empty">No shifts in your roster yet.</p>'; return; }
+        div.innerHTML = `
+          <table>
+            <thead><tr><th>Date</th><th>Start</th><th>End</th></tr></thead>
+            <tbody>
+              ${shifts.map(s => `
+                <tr>
+                  <td>${s.date || 'N/A'}</td>
+                  <td>${s.startTime || 'N/A'}</td>
+                  <td>${s.endTime || 'N/A'}</td>
+                </tr>`).join('')}
+            </tbody>
+          </table>`;
+      } catch { div.innerHTML = '<p class="error">Failed to load roster.</p>'; }
+    }
+
+    function logout() {
+      localStorage.clear();
+      window.location.href = '/login';
+    }
+
+    loadAvailable();
+  </script>
+</body>
+</html>

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ShiftFlow — Login</title>
+  <link rel="stylesheet" href="/login/login.css">
+</head>
+<body>
+  <div class="login-wrapper">
+    <div class="login-card">
+      <div class="logo">
+        <span class="logo-icon">⟳</span>
+        <h1>ShiftFlow</h1>
+      </div>
+      <p class="subtitle">Workforce Shift Management</p>
+      <div id="error-msg" class="error-msg" style="display:none"></div>
+      <div class="form-group">
+        <label>Staff ID</label>
+        <input type="text" id="staff_id" placeholder="e.g. ADM001 or EMP001" />
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="password" placeholder="Enter your password" />
+      </div>
+      <button class="btn-login" onclick="handleLogin()">Sign In</button>
+      <p class="hint">Admin: ADM001 / adminpass &nbsp;|&nbsp; Employee: EMP001 / password123</p>
+    </div>
+  </div>
+  <script src="/config.js"></script>
+  <script>
+    async function handleLogin() {
+      const staff_id = document.getElementById('staff_id').value.trim();
+      const password = document.getElementById('password').value.trim();
+      const errorDiv = document.getElementById('error-msg');
+      errorDiv.style.display = 'none';
+
+      if (!staff_id || !password) {
+        errorDiv.textContent = 'Please enter your Staff ID and password.';
+        errorDiv.style.display = 'block';
+        return;
+      }
+
+      try {
+        const AUTH_API_URL = window.ENV?.AUTH_API_URL || 'http://auth-service:3000';
+        const res = await fetch(`${AUTH_API_URL}/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ staff_id, password })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          errorDiv.textContent = data.error || 'Invalid credentials. Please try again.';
+          errorDiv.style.display = 'block';
+          return;
+        }
+
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('role', data.role);
+        localStorage.setItem('staff_id', staff_id);
+
+        if (data.role === 'admin') {
+          window.location.href = '/admin';
+        } else {
+          window.location.href = '/employee';
+        }
+      } catch (err) {
+        errorDiv.textContent = 'Unable to connect to server. Please try again.';
+        errorDiv.style.display = 'block';
+      }
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') handleLogin();
+    });
+  </script>
+</body>
+</html>

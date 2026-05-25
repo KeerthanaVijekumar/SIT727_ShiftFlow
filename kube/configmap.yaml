@@ -6,12 +6,8 @@ metadata:
     app: shiftflow
 data:
   MONGO_URL: "mongodb://mongo-service.default.svc.cluster.local:27017/shiftflow?ssl=false"
-  
-  # Internal service DNS names (replaces hardcoded IPs)
   AUTH_API_URL: "http://auth-service:3000"
   ADMIN_API_URL: "http://admin-service:3000"
   EMPLOYEE_API_URL: "http://employee-service:3000"
-  
-  # Application settings
   NODE_ENV: "production"
   PORT: "3000"
