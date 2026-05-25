@@ -10,9 +10,6 @@ yarn-error.log*
 .env.development
 .env.production
 
-# Docker
-.dockerignore
-
 # Build outputs
 dist/
 build/
@@ -39,10 +36,13 @@ desktop.ini
 tmp/
 temp/
 *.tmp
+*.pdf
+*.zip
+*.pptx
 
 # Test files
 coverage/
 *.test.js
 
-# Login json test file we created
+# Login json test file
 login.json
