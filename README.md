@@ -523,7 +523,6 @@ gcloud artifacts repositories delete shiftflow-repo \
 - The Kubernetes Authors. (2025). Kubernetes documentation. https://kubernetes.io/docs/home/
 - Google Cloud. (2025). Google Kubernetes Engine documentation. https://cloud.google.com/kubernetes-engine/docs
 - Employment Hero Pty Ltd. (2025). Swag by Employment Hero. https://swagapp.com/au/
-- Vijekumar, K. (2025). ShiftSync [Source code]. GitHub. https://github.com/KeerthanaVijekumar/SIT737_s224719679
 
 ---
 
